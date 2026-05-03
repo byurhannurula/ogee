@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "MetaPeek",
+  "version": "1.0.0",
+  "description": "Preview OG and Twitter metadata on any page",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "34": "icon-34.png",
+      "128": "icon-128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "34": "icon-34.png",
+    "128": "icon-128.png"
+  }
+}

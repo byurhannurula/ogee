@@ -382,6 +382,8 @@ $RECYCLE.BIN/
 
 # build
 /dist
+/dist-*
+/releases
 .plasmo
 build
 

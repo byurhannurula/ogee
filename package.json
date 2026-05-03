@@ -1,21 +1,54 @@
 {
   "version": "1.0.0",
-  "name": "metapeek",
-  "displayName": "MetaPeek",
+  "name": "tagpeek",
+  "displayName": "TagPeek",
   "description": "Preview OG and Twitter metadata on any page",
   "scripts": {
-    "dev": "node scripts/build.mjs --watch",
-    "build": "node scripts/build.mjs"
+    "dev": "node scripts/build.mjs --watch --target=chromium",
+    "dev:firefox": "node scripts/build.mjs --watch --target=firefox",
+    "build": "node scripts/build.mjs --target=chromium",
+    "build:firefox": "node scripts/build.mjs --target=firefox",
+    "build:all": "npm run build && npm run build:firefox",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,html,css,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
+    "preact": "^10.29.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/chrome": "^0.0.246",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "esbuild": "^0.19.0",
-    "typescript": "^5.2.0"
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "happy-dom": "^20.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.2.0",
+    "typescript-eslint": "^8.59.1",
+    "vitest": "^4.1.5"
   }
 }

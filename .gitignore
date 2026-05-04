@@ -389,5 +389,7 @@ build
 
 # etc
 .idea
+idea/
 
 tmp
+

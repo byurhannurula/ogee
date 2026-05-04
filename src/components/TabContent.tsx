@@ -9,8 +9,6 @@ const styles: Record<string, CSSProperties> = {
   imageContainer: {
     borderRadius: 8,
     overflow: "hidden",
-    border: `1px solid ${theme.border}`,
-    backgroundColor: theme.imageBg,
   },
   image: {
     width: "100%",

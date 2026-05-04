@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
+import type { Position } from "@/lib/storage";
 import { fontMono, theme } from "@/styles/theme";
 import { CloseButton } from "./CloseButton";
 
@@ -12,7 +13,7 @@ const styles: Record<string, CSSProperties> = {
   bar: {
     display: "flex",
     alignItems: "center",
-    padding: "6px 8px",
+    padding: "6px 10px 9px",
     gap: 6,
     flexShrink: 0,
     position: "relative",
@@ -23,30 +24,31 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     flex: 1,
     padding: 3,
+    minHeight: 38,
+    borderRadius: 10,
+    background: theme.tabTray,
   },
   indicator: {
     position: "absolute",
     top: 3,
     bottom: 3,
-    backgroundColor: theme.tabActive,
-    borderRadius: 8,
+    backgroundColor: theme.textDim,
+    borderRadius: 9,
     boxShadow:
-      "0 1px 2px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.06)",
-    transition:
-      "left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      "0 2px 1px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.04)",
     zIndex: 0,
   },
   tab: {
     flex: 1,
-    padding: "11px 12px",
+    padding: "8px 12px",
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     textTransform: "uppercase",
-    letterSpacing: "0.1em",
+    letterSpacing: "0.10em",
     border: "none",
-    borderRadius: 8,
+    borderRadius: 9,
     cursor: "pointer",
-    transition: "color 0.15s ease, background-color 0.15s ease",
+    transition: "color 0.18s ease, opacity 0.18s ease, text-shadow 0.18s ease",
     fontFamily: fontMono,
     position: "relative",
     zIndex: 1,
@@ -68,11 +70,13 @@ export function Tabs({
   activeTab,
   onTabChange,
   onCollapse,
+  position,
 }: {
   tabs: Tab[];
   activeTab: string;
   onTabChange: (key: string) => void;
   onCollapse: () => void;
+  position: Position;
 }) {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
@@ -139,7 +143,7 @@ export function Tabs({
           );
         })}
       </div>
-      <CloseButton onClick={onCollapse} />
+      <CloseButton onClick={onCollapse} position={position} />
     </div>
   );
 }

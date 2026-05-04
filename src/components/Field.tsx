@@ -4,27 +4,27 @@ import { fontMono, theme } from "@/styles/theme";
 
 const styles: Record<string, CSSProperties> = {
   field: {
-    marginBottom: 18,
+    marginBottom: 12,
   },
   labelRow: {
     display: "flex",
     alignItems: "center",
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     textTransform: "uppercase",
-    letterSpacing: "0.1em",
+    letterSpacing: "0.08em",
     color: theme.label,
     fontFamily: fontMono,
     fontWeight: 500,
   },
   value: {
-    fontSize: 15,
+    fontSize: 14,
     color: theme.text,
     wordBreak: "break-word",
-    lineHeight: 1.5,
+    lineHeight: 1.45,
     fontFamily: fontMono,
     cursor: "pointer",
     borderRadius: 4,

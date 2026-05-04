@@ -13,7 +13,10 @@ export const theme = {
   accentMuted: "var(--mp-accent-muted)",
   tabsBg: "var(--mp-tabs-bg)",
   tabActive: "var(--mp-tab-active)",
-  imageBg: "var(--mp-image-bg)",
+  tabTray: "var(--mp-tab-tray)",
+  tabTrayBorder: "var(--mp-tab-tray-border)",
+  tabTrayHighlight: "var(--mp-tab-tray-highlight)",
+  controlBg: "var(--mp-control-bg)",
   codeBg: "var(--mp-code-bg)",
 } as const;
 

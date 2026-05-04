@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 
 const RELOAD_PORT = 9012;
 const RELOAD_PATH = "/__tagpeek_reload";
+const RELOAD_HOST = "127.0.0.1";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -115,15 +116,22 @@ function startReloadServer() {
     console.error("Reload server error:", err.message);
     process.exit(1);
   });
-  reloadServer.listen(RELOAD_PORT, "127.0.0.1");
+  reloadServer.listen(RELOAD_PORT, RELOAD_HOST);
 }
 
-function broadcastReload() {
+function broadcastReload(sourceLabel = "build") {
   if (reloadDebounce) clearTimeout(reloadDebounce);
   reloadDebounce = setTimeout(() => {
-    if (!reloadClients.size) return;
+    if (!reloadClients.size) {
+      console.log(
+        `Rebuilt ${sourceLabel}, but no extension reload client is connected. Make sure the browser is loading dist-${target} and reload the unpacked extension once after starting dev.`,
+      );
+      return;
+    }
     for (const res of reloadClients) res.write("data: reload\n\n");
-    console.log(`Reload signal sent to ${reloadClients.size} client(s).`);
+    console.log(
+      `Rebuilt ${sourceLabel}; reload signal sent to ${reloadClients.size} client(s).`,
+    );
   }, 80);
 }
 
@@ -132,7 +140,8 @@ const reloadPlugin = {
   setup(build) {
     build.onEnd((result) => {
       if (result.errors.length) return;
-      broadcastReload();
+      const outfile = basename(build.initialOptions.outfile || "bundle");
+      broadcastReload(outfile);
     });
   },
 };
@@ -147,7 +156,7 @@ const commonOptions = {
   define: {
     "process.env.NODE_ENV": isWatch ? '"development"' : '"production"',
     "process.env.TAGPEEK_RELOAD_URL": JSON.stringify(
-      isWatch ? `http://localhost:${RELOAD_PORT}${RELOAD_PATH}` : "",
+      isWatch ? `http://${RELOAD_HOST}:${RELOAD_PORT}${RELOAD_PATH}` : "",
     ),
   },
 };
@@ -194,11 +203,15 @@ function copyOne(from, to) {
     const raw = readFileSync(from, "utf8");
     const manifest = transformManifestForTarget(raw);
     if (isWatch) {
-      const hostPerm = `http://localhost:${RELOAD_PORT}/*`;
+      const hostPerms = [
+        `http://localhost:${RELOAD_PORT}/*`,
+        `http://${RELOAD_HOST}:${RELOAD_PORT}/*`,
+      ];
       const existing = manifest.host_permissions ?? [];
-      if (!existing.includes(hostPerm)) {
-        manifest.host_permissions = [...existing, hostPerm];
-      }
+      manifest.host_permissions = [
+        ...existing,
+        ...hostPerms.filter((perm) => !existing.includes(perm)),
+      ];
     }
     writeFileSync(to, JSON.stringify(manifest, null, 2));
     console.log(
@@ -236,7 +249,9 @@ function watchStatic() {
 if (isWatch) {
   console.log(`Watching for changes (target=${target}, out=${dist})...`);
   startReloadServer();
-  console.log(`Reload server: http://localhost:${RELOAD_PORT}${RELOAD_PATH}`);
+  console.log(
+    `Reload server: http://${RELOAD_HOST}:${RELOAD_PORT}${RELOAD_PATH}`,
+  );
   copyStatic();
   watchStatic();
   await contentCtx.watch();

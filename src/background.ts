@@ -42,6 +42,7 @@ chrome.commands?.onCommand.addListener(async (command) => {
 // the extension itself. The URL is stamped at build time and is "" in prod
 // so this whole block tree-shakes away.
 const RELOAD_URL = process.env.TAGPEEK_RELOAD_URL;
+const DEV_RELOAD_PENDING_KEY = "tagpeek-dev-reload-pending";
 
 if (RELOAD_URL) {
   const reloadAllTabs = async () => {
@@ -51,6 +52,19 @@ if (RELOAD_URL) {
         .filter((t) => t.id != null && /^https?:/.test(t.url ?? ""))
         .map((t) => chrome.tabs.reload(t.id as number).catch(() => {})),
     );
+  };
+
+  const markReloadPending = async () => {
+    await chrome.storage.local.set({
+      [DEV_RELOAD_PENDING_KEY]: Date.now(),
+    });
+  };
+
+  const consumePendingReload = async () => {
+    const stored = await chrome.storage.local.get(DEV_RELOAD_PENDING_KEY);
+    if (!stored[DEV_RELOAD_PENDING_KEY]) return false;
+    await chrome.storage.local.remove(DEV_RELOAD_PENDING_KEY);
+    return true;
   };
 
   const watchReload = async () => {
@@ -66,7 +80,7 @@ if (RELOAD_URL) {
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
           if (buffer.includes("data: reload")) {
-            await reloadAllTabs();
+            await markReloadPending();
             chrome.runtime.reload();
             return;
           }
@@ -78,5 +92,12 @@ if (RELOAD_URL) {
     }
   };
 
-  watchReload();
+  const bootstrapDevReload = async () => {
+    if (await consumePendingReload()) {
+      await reloadAllTabs();
+    }
+    watchReload();
+  };
+
+  bootstrapDevReload();
 }

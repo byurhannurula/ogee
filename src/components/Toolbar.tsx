@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import type { MetaData } from "@/lib/metadata";
+import { APP_NAME } from "@/lib/app";
 import { fontMono, theme } from "@/styles/theme";
 
 const styles: Record<string, CSSProperties> = {
@@ -37,13 +38,14 @@ const styles: Record<string, CSSProperties> = {
     backgroundColor: theme.border,
     margin: "0 2px",
   },
-  copied: {
+  status: {
     fontSize: 10,
-    color: theme.label,
     letterSpacing: "0.1em",
     textTransform: "uppercase",
     marginLeft: 4,
   },
+  statusOk: { color: theme.label },
+  statusErr: { color: "#e76f51" },
 };
 
 const SOCIAL_LINKS: { label: string; href: (url: string) => string }[] = [
@@ -91,30 +93,50 @@ function ToolButton({
   );
 }
 
+type Flash = {
+  action: "copy" | "download";
+  state: "ok" | "err";
+} | null;
+
 export function Toolbar({ metadata }: { metadata: MetaData }) {
-  const [copied, setCopied] = useState(false);
+  const [flash, setFlash] = useState<Flash>(null);
 
   const json = () => JSON.stringify(stripForExport(metadata), null, 2);
+
+  const showFlash = (next: NonNullable<Flash>) => {
+    setFlash(next);
+    setTimeout(() => setFlash(null), 1500);
+  };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(json());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      showFlash({ action: "copy", state: "ok" });
     } catch {
-      /* silent */
+      showFlash({ action: "copy", state: "err" });
     }
   };
 
   const handleDownload = () => {
-    const blob = new Blob([json()], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tagpeek-${slugifyHost()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([json()], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${APP_NAME.toLowerCase()}-${slugifyHost()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showFlash({ action: "download", state: "ok" });
+    } catch {
+      showFlash({ action: "download", state: "err" });
+    }
   };
+
+  const flashLabel = (() => {
+    if (!flash) return null;
+    if (flash.state === "err") return "failed";
+    return flash.action === "copy" ? "copied" : "downloaded";
+  })();
 
   const openIn = (build: (u: string) => string) => {
     const pageUrl = window.location.href;
@@ -137,7 +159,16 @@ export function Toolbar({ metadata }: { metadata: MetaData }) {
           />
         ))}
       </div>
-      {copied && <span style={styles.copied}>copied</span>}
+      {flashLabel && (
+        <span
+          style={{
+            ...styles.status,
+            ...(flash?.state === "err" ? styles.statusErr : styles.statusOk),
+          }}
+        >
+          {flashLabel}
+        </span>
+      )}
     </div>
   );
 }

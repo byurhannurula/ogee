@@ -1,107 +1,115 @@
-# Browser Extension Template
+# OGee
 
-## w/ React Preact Typescript ESBuild
+A browser extension for developers to inspect Open Graph, Twitter Cards, and all page metadata without opening DevTools. Debug social sharing, SEO, and structured data in seconds.
 
-![Generic badge](https://img.shields.io/badge/build-success-brightgreen.svg)
+<img src="public/ogee-logo.png" alt="OGee" width="64" height="64" />
 
-> Browser Extension Template with ESbuild builds, support for React, Preact, Typescript, Tailwind, Manifest V3/V2 support and multi browser build including Chrome, Firefox, Safari, Edge, Brave.
+## What it does
 
-## Builtin
+OGee reveals all hidden metadata on any webpage — Open Graph tags, Twitter Cards, JSON-LD, and general meta tags — in a clean, organized overlay. Perfect for debugging dynamic OG images, verifying meta tag injection, and catching missing fields before going live.
 
-- Fast 100ms builds: ESBuild
-- Manifest v3/v2 in TS
-- 17+ Browsers Support
-- 8+ Pages: content, bookmarks, popup, ...
-- Auto Opens Browser
-- Run Multiple Browsers in Parallel
-- Autoreloads Browser
-- Isolated Browser Profiles
+### Features
 
- ## Commands
+- **Instant metadata overlay** — Press `Ctrl+E` to see all `<meta>` and `<link>` tags at a glance
+- **OG image verification** — Preview images as crawlers see them, including dynamically generated ones
+- **Complete tag coverage** — Open Graph, Twitter Cards, general meta, JSON-LD structured data, page links
+- **SPA support** — Auto re-extracts on React, Vue, Angular, and other single-page apps
+- **Validation warnings** — Checks for missing required fields (og:title, og:image, twitter:card, etc.)
+- **Per-site control** — Enable/disable per domain with `Ctrl+Shift+E`
+- **Export tools** — Copy metadata as JSON, download for debugging, open in social debuggers
+- **Cross-browser** — Chrome, Brave, Edge, Firefox (MV3)
+- **Dark/Light themes** — Auto-detects system preference
+- **Positionable** — Pin the panel to any corner
 
-```sh
-# Install packages
+## Why developers use OGee
+
+- **Debug dynamic OG images** — See if generated social images render correctly before deploying
+- **Verify meta injection** — Confirm SSR or client-side meta tags work on every route
+- **Catch missing tags** — Spot missing og:image, twitter:card, or description early
+- **SPA debugging** — History changes and head mutations trigger automatic re-extraction
+- **Faster than DevTools** — No need to dig through Elements → scroll through `<head>`
+
+## Install
+
+### From source
+
+```bash
+# Clone and install
+git clone https://github.com/byurhannurula/ogee.git
+cd ogee
 npm install
 
-# Live Dev for multiple browsers
-npm run start [browser]
-# npm run start chrome firefox safari
+# Build for Chrome/Brave/Edge
+npm run build
 
-# Build for multiple browsers
-npm run build [browser]
-# npm run build chrome firefox safari
+# Or build for Firefox
+npm run build:firefox
+
+# Load in browser:
+# Chrome: chrome://extensions → "Load unpacked" → select dist-chromium/
+# Firefox: about:debugging → "Load Temporary Add-on" → select dist-firefox/manifest.json
 ```
 
-That's it, if you got the browsers in the start command installed, it automatically builds for that, starts all of them, loads the extensions and reloads them on change. ESBuild makes sure the builds and reloads are really fast.
+### Development
 
-See browser support below.
+```bash
+# Watch mode with auto-reload
+npm run dev          # Chromium
+npm run dev:firefox  # Firefox
+```
 
-## Supports
+## Usage
 
-- ESBuild
-- React 18
-- Typescript
-- Preact X
-- PostCSS
-- TailwindCSS
-- CSS Modules
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+E` | Toggle OGee panel |
+| `Ctrl+Shift+E` | Enable/disable on current site |
+| `Esc` | Close panel |
 
-Simply remove or don't use the technologies you don't like.
+Click the extension icon for settings: theme, position, validation toggle, export tools.
 
-Scripts & Pages (located in `src/pages`):
+## Tech Stack
 
-- background
-- content
-- history
-- options
-- popup
-- bookmarks  
-- devtools   
-- newtab
-- panel
+- **React 18** (aliased to Preact for smaller bundle)
+- **TypeScript**
+- **ESBuild** — fast builds, watch mode with SSE reload
+- **Shadow DOM** — style isolation from host pages
+- **Vitest** — unit tests with happy-dom
 
-Just delete the folders of pages you don't require, the builds scripts detects automatically what's in there and adjusts the manifest automatically.
+## Project Structure
 
-Browsers:
-- arc
-- brave
-- chrome
-- chrome-beta
-- chrome-canary
-- chromium
-- edge
-- firefox
-- firefox-developer-editon
-- firefox
-- opera
-- orion *
-- safari *
-- safari-beta *
-- safari-technical-preview *
-- sidekick
-- vivaldi
+```
+src/
+  components/     — UI components (panel, tabs, fields, toolbar)
+  hooks/          — React hooks (metadata, settings, escape key)
+  lib/            — Core logic (metadata extraction, storage, validation)
+  styles/         — Theme tokens and CSS animations
+  background.ts   — Service worker (commands, reload)
+  content.tsx     — Content script injection
+  popup.tsx       — Settings popup
+  manifest.json   — Extension manifest
+tests/            — Test files mirroring src/
+scripts/          — Build and release scripts
+public/           — Extension icons and assets
+```
 
-Browsers with * stars get a build, but needs to be launched manually, and extension needs to loaded manually with Xcode.
+## Development
 
-## Notes
+```bash
+npm test        # Run tests
+npm run lint    # ESLint
+npm run format  # Prettier
+npm run typecheck  # TypeScript
+```
 
-If you want webpack build, checkout the webpack branch.
+## Privacy
 
-In each of the pages folder, the target main script is the first of
+OGee doesn't track you, collect your data, or phone home. All metadata extraction happens locally in your browser. No analytics, no telemetry.
 
-- index.html
-- index.ts
-- index.tsx
-- index.js
-- index.jsx
-- main.html
-- main.ts
-- main.tsx
-- main.js
-- main.jsx
+## License
 
-Put your injecting scripts in `public` directory that needs to imported via the `chrome.runtime.getURL` API.
+MIT
 
-## Credits
+---
 
-V2 wouldn't have been possible without my brilliant friend [Sayan Naskar](https://github.com/nascarsayan), the more credit we give him is less!
+Built by [Byurhan Nurula](https://github.com/byurhannurula)

@@ -10,7 +10,7 @@ import { positionAnchor } from "@/lib/position";
 import type { Position } from "@/lib/storage";
 import { fontMono, theme, Z_TOP } from "@/styles/theme";
 
-const PANEL_WIDTH = 420;
+const PANEL_WIDTH = 460;
 const PANEL_MAX_HEIGHT_VH = 85;
 const THUMB_WIDTH = 168;
 const THUMB_HEIGHT = 128;

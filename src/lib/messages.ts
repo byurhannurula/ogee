@@ -3,4 +3,4 @@
 
 export type Message = { type: "toggle-panel" } | { type: "open-panel" };
 
-export const TOGGLE_PANEL_EVENT = "tagpeek:toggle-panel";
+export { TOGGLE_PANEL_EVENT } from "./app";

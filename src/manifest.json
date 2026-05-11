@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "TagPeek",
+  "name": "OGee",
   "version": "1.0.0",
-  "description": "Preview OG and Twitter metadata on any page",
+  "description": "Inspect Open Graph, Twitter Cards, and meta tags on any page",
+  "author": "Byurhan Nurula",
+  "homepage_url": "https://github.com/byurhannurula/ogee",
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_popup": "popup.html",
@@ -24,17 +26,17 @@
   "commands": {
     "toggle-panel": {
       "suggested_key": {
-        "default": "Ctrl+M",
-        "mac": "MacCtrl+M"
+        "default": "Ctrl+E",
+        "mac": "MacCtrl+E"
       },
-      "description": "Open or close the TagPeek panel"
+      "description": "Open or close the OGee panel"
     },
     "toggle-host-enabled": {
       "suggested_key": {
-        "default": "Ctrl+Shift+M",
-        "mac": "MacCtrl+Shift+M"
+        "default": "Ctrl+Shift+E",
+        "mac": "MacCtrl+Shift+E"
       },
-      "description": "Enable or disable TagPeek on the current site"
+      "description": "Enable or disable OGee on the current site"
     }
   },
   "icons": {

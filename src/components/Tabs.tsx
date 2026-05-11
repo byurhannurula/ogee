@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import type { Position } from "@/lib/storage";
+import { TAB_PANEL_ID } from "@/lib/app";
 import { fontMono, theme } from "@/styles/theme";
 import { CloseButton } from "./CloseButton";
 
@@ -37,6 +38,8 @@ const styles: Record<string, CSSProperties> = {
     boxShadow:
       "0 2px 1px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.04)",
     zIndex: 0,
+    transition:
+      "left 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
   },
   tab: {
     flex: 1,
@@ -62,8 +65,7 @@ export interface Tab {
   label: string;
 }
 
-export const TAB_PANEL_ID = "tagpeek-tabpanel";
-const tabId = (key: string) => `tagpeek-tab-${key}`;
+const tabId = (key: string) => `ogee-tab-${key}`;
 
 export function Tabs({
   tabs,
@@ -80,11 +82,13 @@ export function Tabs({
 }) {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const [hasMeasured, setHasMeasured] = useState(false);
 
   useEffect(() => {
     const activeEl = tabRefs.current.get(activeTab);
     if (activeEl) {
       setIndicator({ left: activeEl.offsetLeft, width: activeEl.offsetWidth });
+      setHasMeasured(true);
     }
   }, [activeTab, tabs]);
 
@@ -116,6 +120,8 @@ export function Tabs({
             ...styles.indicator,
             left: indicator.left,
             width: indicator.width,
+            opacity: hasMeasured ? 1 : 0,
+            transition: hasMeasured ? styles.indicator.transition : "none",
           }}
         />
         {tabs.map((tab, idx) => {

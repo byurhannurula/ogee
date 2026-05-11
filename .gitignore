@@ -390,6 +390,10 @@ build
 # etc
 .idea
 idea/
+docs/
+.claude/
+
+*.local
 
 tmp
 

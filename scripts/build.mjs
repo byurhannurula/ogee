@@ -12,7 +12,7 @@ import { dirname, join, basename } from "path";
 import { fileURLToPath } from "url";
 
 const RELOAD_PORT = 9012;
-const RELOAD_PATH = "/__tagpeek_reload";
+const RELOAD_PATH = "/__ogee_reload";
 const RELOAD_HOST = "127.0.0.1";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -43,7 +43,7 @@ if (!existsSync(dist)) {
 // Firefox-specific manifest transform. Required: a stable extension id under
 // browser_specific_settings.gecko for AMO. Everything else in the base manifest
 // is already MV3-portable (FF supports background.service_worker since 121).
-const FIREFOX_GECKO_ID = "tagpeek@recheck.dev";
+const FIREFOX_GECKO_ID = "ogee@byurhannurula.com";
 const FIREFOX_MIN_VERSION = "121.0";
 
 function transformManifestForTarget(raw) {
@@ -150,12 +150,13 @@ const commonOptions = {
   bundle: true,
   minify: !isWatch,
   sourcemap: isWatch,
+  drop: isWatch ? [] : ["console", "debugger"],
   target: ["chrome100"],
   alias: reactAlias,
   plugins: isWatch ? [reloadPlugin] : [],
   define: {
     "process.env.NODE_ENV": isWatch ? '"development"' : '"production"',
-    "process.env.TAGPEEK_RELOAD_URL": JSON.stringify(
+    "process.env.OGEE_RELOAD_URL": JSON.stringify(
       isWatch ? `http://${RELOAD_HOST}:${RELOAD_PORT}${RELOAD_PATH}` : "",
     ),
   },

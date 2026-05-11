@@ -1,12 +1,14 @@
-// Single source of truth for chrome.storage keys + typed accessors.
-// Avoids scattered "tagpeek-*" string literals across the codebase.
+import { STORAGE_PREFIX } from "./app";
 
-const KEY_DEFAULT_ENABLED = "tagpeek-default-enabled";
-const KEY_HOST_OVERRIDES = "tagpeek-host-overrides";
-const KEY_THEME = "tagpeek-theme";
-const KEY_POSITION = "tagpeek-position";
-const KEY_SHOW_VALIDATION = "tagpeek-show-validation";
-const KEY_SHOW_TOOLS = "tagpeek-show-tools";
+// Single source of truth for chrome.storage keys + typed accessors.
+// Avoids scattered string literals across the codebase.
+
+const KEY_DEFAULT_ENABLED = `${STORAGE_PREFIX}-default-enabled`;
+const KEY_HOST_OVERRIDES = `${STORAGE_PREFIX}-host-overrides`;
+const KEY_THEME = `${STORAGE_PREFIX}-theme`;
+const KEY_POSITION = `${STORAGE_PREFIX}-position`;
+const KEY_SHOW_VALIDATION = `${STORAGE_PREFIX}-show-validation`;
+const KEY_SHOW_TOOLS = `${STORAGE_PREFIX}-show-tools`;
 
 type HostOverrides = Record<string, boolean>;
 export type ThemeMode = "auto" | "light" | "dark";
@@ -33,6 +35,30 @@ const VALID_POSITIONS: Position[] = [
   "top-right",
 ];
 
+// Narrow validators. Failing values are treated as undefined so callers fall
+// back to defaults — protects the panel from a corrupted storage entry.
+const isBool = (v: unknown): v is boolean => typeof v === "boolean";
+const isTheme = (v: unknown): v is ThemeMode =>
+  typeof v === "string" && (VALID_THEMES as string[]).includes(v);
+const isPosition = (v: unknown): v is Position =>
+  typeof v === "string" && (VALID_POSITIONS as string[]).includes(v);
+const isHostOverrides = (v: unknown): v is HostOverrides =>
+  !!v &&
+  typeof v === "object" &&
+  !Array.isArray(v) &&
+  Object.values(v as Record<string, unknown>).every(
+    (x) => typeof x === "boolean",
+  );
+
+const VALIDATORS: { [K in keyof StorageShape]: (v: unknown) => boolean } = {
+  [KEY_DEFAULT_ENABLED]: isBool,
+  [KEY_HOST_OVERRIDES]: isHostOverrides,
+  [KEY_THEME]: isTheme,
+  [KEY_POSITION]: isPosition,
+  [KEY_SHOW_VALIDATION]: isBool,
+  [KEY_SHOW_TOOLS]: isBool,
+};
+
 type StorageKey = keyof StorageShape;
 
 function api() {
@@ -43,23 +69,13 @@ function api() {
 async function get<K extends StorageKey>(
   key: K,
   fallback: StorageShape[K],
-  validate?: (v: unknown) => boolean,
 ): Promise<StorageShape[K]> {
   const local = api();
   if (!local) return fallback;
   const res = await local.get(key);
   const value = res[key];
   if (typeof value === "undefined" || value === null) return fallback;
-  if (validate) {
-    return (validate(value) ? value : fallback) as StorageShape[K];
-  }
-  if (typeof fallback === "boolean") {
-    return (typeof value === "boolean" ? value : fallback) as StorageShape[K];
-  }
-  if (typeof fallback === "object") {
-    return (typeof value === "object" ? value : fallback) as StorageShape[K];
-  }
-  return value as StorageShape[K];
+  return (VALIDATORS[key](value) ? value : fallback) as StorageShape[K];
 }
 
 async function set<K extends StorageKey>(
@@ -74,28 +90,17 @@ async function set<K extends StorageKey>(
 function onAnyChange(cb: (changes: Partial<StorageShape>) => void): () => void {
   const local = api();
   if (!local) return () => {};
+  const KEYS = Object.keys(VALIDATORS) as StorageKey[];
   const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
     const out: Partial<StorageShape> = {};
-    if (KEY_DEFAULT_ENABLED in changes) {
-      out[KEY_DEFAULT_ENABLED] = changes[KEY_DEFAULT_ENABLED]
-        .newValue as boolean;
-    }
-    if (KEY_HOST_OVERRIDES in changes) {
-      out[KEY_HOST_OVERRIDES] = (changes[KEY_HOST_OVERRIDES].newValue ??
-        {}) as HostOverrides;
-    }
-    if (KEY_THEME in changes) {
-      out[KEY_THEME] = changes[KEY_THEME].newValue as ThemeMode;
-    }
-    if (KEY_POSITION in changes) {
-      out[KEY_POSITION] = changes[KEY_POSITION].newValue as Position;
-    }
-    if (KEY_SHOW_VALIDATION in changes) {
-      out[KEY_SHOW_VALIDATION] = changes[KEY_SHOW_VALIDATION]
-        .newValue as boolean;
-    }
-    if (KEY_SHOW_TOOLS in changes) {
-      out[KEY_SHOW_TOOLS] = changes[KEY_SHOW_TOOLS].newValue as boolean;
+    for (const key of KEYS) {
+      if (!(key in changes)) continue;
+      const next = changes[key].newValue;
+      // Cleared value or invalid payload → leave key out so consumers fall
+      // back to defaults at next read instead of seeing garbage.
+      if (next === undefined || next === null) continue;
+      if (!VALIDATORS[key](next)) continue;
+      (out as Record<string, unknown>)[key] = next;
     }
     if (Object.keys(out).length) cb(out);
   };
@@ -135,11 +140,7 @@ async function getEffectiveEnabled(host: string): Promise<boolean> {
 }
 
 async function getTheme(): Promise<ThemeMode> {
-  return get(
-    KEY_THEME,
-    "dark",
-    (v) => typeof v === "string" && (VALID_THEMES as string[]).includes(v),
-  );
+  return get(KEY_THEME, "dark");
 }
 
 async function setTheme(v: ThemeMode): Promise<void> {
@@ -147,11 +148,7 @@ async function setTheme(v: ThemeMode): Promise<void> {
 }
 
 async function getPosition(): Promise<Position> {
-  return get(
-    KEY_POSITION,
-    "bottom-left",
-    (v) => typeof v === "string" && (VALID_POSITIONS as string[]).includes(v),
-  );
+  return get(KEY_POSITION, "bottom-left");
 }
 
 async function setPosition(v: Position): Promise<void> {

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "@/components/App";
 import { installHistoryPatch } from "@/lib/spa-nav";
 import { TOGGLE_PANEL_EVENT, type Message } from "@/lib/messages";
+import { HOST_ELEMENT_ID } from "@/lib/app";
 import { shadowStyles } from "@/styles/keyframes";
 
 // Patch history once at script load so SPA route changes are observable
@@ -23,7 +24,7 @@ function mount() {
 
   // Shadow DOM isolates panel styles from the host page (and vice versa).
   const host = document.createElement("div");
-  host.id = "tagpeek-host";
+  host.id = HOST_ELEMENT_ID;
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
 
@@ -49,6 +50,9 @@ function hasRelevantMeta(): boolean {
 }
 
 function bootstrap() {
+  // Skip cross-origin iframes (ads, embeds): the panel would be invisibly
+  // clipped, and React + the head observer would still run for nothing.
+  if (window.top !== window) return;
   if (hasRelevantMeta()) {
     mount();
     return;

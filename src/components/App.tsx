@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TAB_CONFIG, type TabKey } from "@/lib/constants";
+import { HOST_ELEMENT_ID } from "@/lib/app";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
 import { useMetadata } from "@/hooks/useMetadata";
 import { useSettings } from "@/hooks/useSettings";
@@ -8,7 +9,8 @@ import { validate } from "@/lib/validate";
 import { PeekShell } from "./PeekShell";
 import { PeekThumb } from "./PeekThumb";
 import { TabContent } from "./TabContent";
-import { Tabs, TAB_PANEL_ID, tabId } from "./Tabs";
+import { TAB_PANEL_ID } from "@/lib/app";
+import { Tabs, tabId } from "./Tabs";
 import { Toolbar } from "./Toolbar";
 
 export function App() {
@@ -18,7 +20,7 @@ export function App() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const host = document.getElementById("tagpeek-host");
+    const host = document.getElementById(HOST_ELEMENT_ID);
     const themeRoot = host?.shadowRoot?.querySelector(
       "[data-theme]",
     ) as HTMLElement | null;
@@ -79,12 +81,14 @@ export function App() {
             role="tabpanel"
             aria-labelledby={tabId(activeTab)}
           >
-            <TabContent
-              group={metadata[activeTab]}
-              imageUrl={previewImage}
-              validation={validation}
-              showValidation={showValidation}
-            />
+            <div key={activeTab} className="mp-tab-content">
+              <TabContent
+                group={metadata[activeTab]}
+                imageUrl={previewImage}
+                validation={validation}
+                showValidation={showValidation}
+              />
+            </div>
           </div>
         </>
       }

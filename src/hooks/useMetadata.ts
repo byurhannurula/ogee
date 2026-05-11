@@ -35,14 +35,15 @@ export function useMetadata(): UseMetadataResult {
       setHasData(Object.values(data).some((g) => g.hasData));
     };
 
-    idle(extract);
-
     let timer: ReturnType<typeof setTimeout> | null = null;
     const scheduleExtract = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(extract, 300);
     };
 
+    // Register listeners + observer BEFORE the first idle extract. If meta
+    // is injected during the gap between idle scheduling and observer
+    // attach, the mutation still queues a re-extract.
     window.addEventListener(NAV_EVENT, scheduleExtract);
     window.addEventListener("popstate", scheduleExtract);
 
@@ -55,6 +56,8 @@ export function useMetadata(): UseMetadataResult {
         attributeFilter: ["content", "href"],
       });
     }
+
+    idle(extract);
 
     return () => {
       unsubscribe();

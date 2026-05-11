@@ -32,14 +32,14 @@ export function useSettings(): Settings {
     storage.getShowValidation().then(setShowValidationState);
     storage.getShowTools().then(setShowToolsState);
     const unsubscribe = storage.onAnyChange((changes) => {
-      if (changes["tagpeek-theme"])
-        setThemeState(changes["tagpeek-theme"] as ThemeMode);
-      if (changes["tagpeek-position"])
-        setPositionState(changes["tagpeek-position"] as Position);
-      if (typeof changes["tagpeek-show-validation"] === "boolean")
-        setShowValidationState(changes["tagpeek-show-validation"]);
-      if (typeof changes["tagpeek-show-tools"] === "boolean")
-        setShowToolsState(changes["tagpeek-show-tools"]);
+      if (changes["ogee-theme"])
+        setThemeState(changes["ogee-theme"] as ThemeMode);
+      if (changes["ogee-position"])
+        setPositionState(changes["ogee-position"] as Position);
+      if (typeof changes["ogee-show-validation"] === "boolean")
+        setShowValidationState(changes["ogee-show-validation"]);
+      if (typeof changes["ogee-show-tools"] === "boolean")
+        setShowToolsState(changes["ogee-show-tools"]);
     });
 
     const mq = window.matchMedia("(prefers-color-scheme: dark)");

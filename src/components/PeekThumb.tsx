@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { fontMono, theme } from "@/styles/theme";
 
 const styles: Record<string, CSSProperties> = {
@@ -21,6 +21,7 @@ const styles: Record<string, CSSProperties> = {
     height: "100%",
     objectFit: "contain",
     display: "block",
+    transition: "opacity 0.18s ease",
   },
   textWrap: {
     padding: "5px 7px 7px",
@@ -53,21 +54,43 @@ const styles: Record<string, CSSProperties> = {
 };
 
 export function PeekThumb({ image, title }: { image: string; title: string }) {
+  // Fade behaviour only kicks in once we've successfully loaded an image
+  // at least once. On first mount we let the browser render progressively
+  // — hiding it would leave the user staring at a blank box during the
+  // initial network fetch (1-3s on cold cache).
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const [errored, setErrored] = useState(false);
+  const hasEverLoaded = loadedUrl !== null;
+  const isLoaded = loadedUrl === image;
+  const showProgressiveLoad = !hasEverLoaded;
+
+  // Reset error state when the URL changes so a previously-broken image
+  // doesn't poison a fresh extract on SPA nav.
+  useEffect(() => {
+    setErrored(false);
+  }, [image]);
+
   return (
     <div style={styles.card}>
-      {image ? (
+      {image && !errored ? (
         <div style={styles.imageWrap}>
           <img
+            key={image}
             src={image}
             alt=""
-            style={styles.image}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
+            style={{
+              ...styles.image,
+              opacity: showProgressiveLoad || isLoaded ? 1 : 0,
             }}
+            onLoad={() => {
+              setErrored(false);
+              setLoadedUrl(image);
+            }}
+            onError={() => setErrored(true)}
           />
         </div>
       ) : (
-        <div style={styles.fallback}>OG</div>
+        <div style={styles.fallback}>{errored ? "IMG ERR" : "OG"}</div>
       )}
       {title && (
         <div style={styles.textWrap}>

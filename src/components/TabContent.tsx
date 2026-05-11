@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { MetaField, MetaGroup } from "@/lib/metadata";
 import type { ValidationResult } from "@/lib/validate";
 import { fontMono, theme } from "@/styles/theme";
@@ -15,6 +15,20 @@ const styles: Record<string, CSSProperties> = {
     height: "auto",
     objectFit: "cover",
     display: "block",
+  },
+  imageError: {
+    width: "100%",
+    aspectRatio: "1.91 / 1",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    border: `1px dashed ${theme.border}`,
+    color: theme.textDim,
+    fontSize: 11,
+    fontFamily: fontMono,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
   },
   row: {
     display: "flex",
@@ -191,16 +205,7 @@ export function TabContent({
           <div style={{ ...fieldStyles.label, marginBottom: 4 }}>
             {imageLabel}
           </div>
-          <div style={styles.imageContainer}>
-            <img
-              src={image}
-              alt="Preview"
-              style={styles.image}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          </div>
+          <ImagePreview src={image} />
         </div>
       )}
 
@@ -214,6 +219,25 @@ export function TabContent({
             severity={severityFor(field.key)}
           />
         ))}
+    </div>
+  );
+}
+
+function ImagePreview({ src }: { src: string }) {
+  const [errored, setErrored] = useState(false);
+  // Reset on URL change so a new extract gets a clean shot.
+  useEffect(() => setErrored(false), [src]);
+  if (errored) {
+    return <div style={styles.imageError}>image failed to load</div>;
+  }
+  return (
+    <div style={styles.imageContainer}>
+      <img
+        src={src}
+        alt="Preview"
+        style={styles.image}
+        onError={() => setErrored(true)}
+      />
     </div>
   );
 }

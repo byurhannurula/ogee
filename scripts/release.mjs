@@ -57,14 +57,15 @@ if (!existsSync(chromiumDir) || !existsSync(firefoxDir)) {
   fail("Expected dist-chromium/ and dist-firefox/ after build:all");
 }
 
-const chromiumZip = `ogee-${version}-chromium.zip`;
-const firefoxZip = `ogee-${version}-firefox.zip`;
-run(`rm -f ${chromiumZip} ${firefoxZip}`);
-run(`cd dist-chromium && zip -r ../${chromiumZip} . && cd ..`);
-run(`cd dist-firefox && zip -r ../${firefoxZip} . && cd ..`);
+const chromiumZip = `dist/ogee-${version}-chromium.zip`;
+const firefoxZip = `dist/ogee-${version}-firefox.zip`;
+run(`mkdir -p dist && rm -f ${chromiumZip} ${firefoxZip}`);
+// Sourcemaps stay out of store builds
+run(`cd dist-chromium && zip -r ../${chromiumZip} . -x "*.map" -x "*.DS_Store" && cd ..`);
+run(`cd dist-firefox && zip -r ../${firefoxZip} . -x "*.map" -x "*.DS_Store" && cd ..`);
 
 run(
-  `gh release create ${tag} --generate-notes --title "TagPeek ${version}" ${chromiumZip} ${firefoxZip}`,
+  `gh release create ${tag} --generate-notes --title "OGee ${version}" ${chromiumZip} ${firefoxZip}`,
 );
 
 console.log(`\nReleased ${tag}.`);

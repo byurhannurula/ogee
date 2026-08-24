@@ -63,7 +63,11 @@ type StorageKey = keyof StorageShape;
 
 function api() {
   // chrome.storage.local is undefined in non-extension contexts (e.g. tests).
-  return chrome?.storage?.local;
+  try {
+    return chrome?.storage?.local;
+  } catch {
+    return undefined;
+  }
 }
 
 async function get<K extends StorageKey>(
@@ -109,7 +113,7 @@ function onAnyChange(cb: (changes: Partial<StorageShape>) => void): () => void {
 }
 
 async function getDefaultEnabled(): Promise<boolean> {
-  return get(KEY_DEFAULT_ENABLED, true);
+  return get(KEY_DEFAULT_ENABLED, false);
 }
 
 async function setDefaultEnabled(v: boolean): Promise<void> {

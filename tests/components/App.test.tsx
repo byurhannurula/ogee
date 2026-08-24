@@ -36,10 +36,28 @@ describe("App", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders nothing when enabled=false", () => {
+  it("renders nothing when no metadata", () => {
     vi.spyOn(useMetadataModule, "useMetadata").mockReturnValue({
       metadata: null,
-      hasData: false,
+      enabled: true,
+    });
+    vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
+      theme: "dark",
+      resolvedTheme: "dark",
+      position: "bottom-left",
+      showValidation: false,
+      showTools: false,
+    });
+
+    const { container } = render(<App />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renders nothing when disabled", () => {
+    vi.spyOn(useMetadataModule, "useMetadata").mockReturnValue({
+      metadata: mockMetadata() as ReturnType<
+        typeof useMetadataModule.useMetadata
+      >["metadata"],
       enabled: false,
     });
     vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
@@ -54,30 +72,11 @@ describe("App", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders nothing when no metadata data", () => {
-    vi.spyOn(useMetadataModule, "useMetadata").mockReturnValue({
-      metadata: null,
-      hasData: false,
-      enabled: true,
-    });
-    vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
-      theme: "dark",
-      resolvedTheme: "dark",
-      position: "bottom-left",
-      showValidation: false,
-      showTools: false,
-    });
-
-    const { container } = render(<App />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("renders thumbnail when collapsed", () => {
+  it("renders thumbnail by default", () => {
     vi.spyOn(useMetadataModule, "useMetadata").mockReturnValue({
       metadata: mockMetadata() as ReturnType<
         typeof useMetadataModule.useMetadata
       >["metadata"],
-      hasData: true,
       enabled: true,
     });
     vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
@@ -89,17 +88,18 @@ describe("App", () => {
     });
 
     render(<App />);
+    // Should start as thumbnail (collapsed)
+    expect(screen.queryByRole("dialog")).toBeFalsy();
     expect(
       screen.getByRole("button", { name: /open metadata panel/i }),
     ).toBeTruthy();
   });
 
-  it("expands panel on click", () => {
+  it("expands panel on thumbnail click", () => {
     vi.spyOn(useMetadataModule, "useMetadata").mockReturnValue({
       metadata: mockMetadata() as ReturnType<
         typeof useMetadataModule.useMetadata
       >["metadata"],
-      hasData: true,
       enabled: true,
     });
     vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
@@ -111,6 +111,10 @@ describe("App", () => {
     });
 
     render(<App />);
+    // Should start as thumbnail
+    expect(screen.queryByRole("dialog")).toBeFalsy();
+
+    // Click thumbnail to expand
     const thumb = screen.getByRole("button", { name: /open metadata panel/i });
     fireEvent.click(thumb);
 
@@ -122,7 +126,6 @@ describe("App", () => {
       metadata: mockMetadata() as ReturnType<
         typeof useMetadataModule.useMetadata
       >["metadata"],
-      hasData: true,
       enabled: true,
     });
     vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
@@ -134,9 +137,9 @@ describe("App", () => {
     });
 
     render(<App />);
+    // Start expanded
     const thumb = screen.getByRole("button", { name: /open metadata panel/i });
     fireEvent.click(thumb);
-
     expect(screen.queryByRole("dialog")).toBeTruthy();
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -149,7 +152,6 @@ describe("App", () => {
       metadata: mockMetadata() as ReturnType<
         typeof useMetadataModule.useMetadata
       >["metadata"],
-      hasData: true,
       enabled: true,
     });
     vi.spyOn(useSettingsModule, "useSettings").mockReturnValue({
@@ -162,16 +164,17 @@ describe("App", () => {
 
     render(<App />);
 
-    // Should start collapsed
+    // Should start as thumbnail
     expect(screen.queryByRole("dialog")).toBeFalsy();
 
-    // Use act to ensure event is processed after effects run
+    // Toggle to expanded
     await act(async () => {
       window.dispatchEvent(new CustomEvent(TOGGLE_PANEL_EVENT));
     });
 
     expect(screen.queryByRole("dialog")).toBeTruthy();
 
+    // Toggle back to thumbnail
     await act(async () => {
       window.dispatchEvent(new CustomEvent(TOGGLE_PANEL_EVENT));
     });

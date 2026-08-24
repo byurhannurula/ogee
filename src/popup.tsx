@@ -219,11 +219,17 @@ const styles = {
     textAlign: "center" as const,
     lineHeight: 1.7,
   } as const,
-  hintRebind: {
-    marginTop: 4,
-    fontSize: 10,
-    color: "var(--mp-text-dim)",
-    opacity: 0.7,
+  actionBtn: {
+    width: "100%",
+    padding: "10px 12px",
+    fontSize: 13,
+    fontWeight: 500,
+    borderRadius: 8,
+    border: "none",
+    background: "var(--mp-label)",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "opacity 0.15s ease",
   } as const,
 };
 
@@ -291,7 +297,6 @@ function useResolvedTheme(theme: ThemeMode): "light" | "dark" {
 }
 
 export default function Popup() {
-  const [defaultEnabled, setDefaultEnabled] = useState(true);
   const [host, setHost] = useState<string>("");
   const [hostOverride, setHostOverride] = useState<boolean | null>(null);
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -307,7 +312,6 @@ export default function Popup() {
   }, [resolvedTheme]);
 
   useEffect(() => {
-    storage.getDefaultEnabled().then(setDefaultEnabled);
     storage.getTheme().then(setTheme);
     storage.getPosition().then(setPosition);
     storage.getShowValidation().then(setShowValidation);
@@ -326,21 +330,29 @@ export default function Popup() {
     });
   }, []);
 
-  const hostEnabled = hostOverride === null ? defaultEnabled : hostOverride;
+  const hostEnabled = hostOverride === true;
   const canControlHost = !!host;
-
-  const toggleDefault = async () => {
-    const next = !defaultEnabled;
-    setDefaultEnabled(next);
-    await storage.setDefaultEnabled(next);
-  };
 
   const toggleHost = async () => {
     if (!canControlHost) return;
     const next = !hostEnabled;
-    const override = next === defaultEnabled ? null : next;
-    setHostOverride(override);
-    await storage.setHostOverride(host, override);
+    setHostOverride(next);
+    await storage.setHostOverride(host, next);
+
+    // If enabling, immediately inject and open on the current tab
+    if (next) {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (tab?.id) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["content.js"],
+        });
+        await chrome.tabs.sendMessage(tab.id, { type: "open-panel" });
+      }
+    }
   };
 
   const pickTheme = async (v: ThemeMode) => {
@@ -391,20 +403,6 @@ export default function Popup() {
         <div>
           <div style={styles.title}>OGee</div>
           <div style={styles.subtitle}>Social metadata inspector</div>
-        </div>
-      </div>
-
-      <div className="mp-pop-card">
-        <div style={styles.rowFlex}>
-          <div>
-            <div style={styles.rowLabel}>Enable globally</div>
-            <div style={styles.rowSubLabel}>Default for all sites</div>
-          </div>
-          <Switch
-            on={defaultEnabled}
-            onClick={toggleDefault}
-            ariaLabel="Enable globally"
-          />
         </div>
       </div>
 
@@ -507,9 +505,16 @@ export default function Popup() {
       </div>
 
       <div style={styles.hint}>
-        <span className="mp-pop-kbd">⌃E</span> open/close ·{" "}
+        <span className="mp-pop-kbd">⌃E</span> toggle panel ·{" "}
         <span className="mp-pop-kbd">⌃⇧E</span> toggle site
-        <div style={styles.hintRebind}>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 10,
+            color: "var(--mp-text-dim)",
+            opacity: 0.7,
+          }}
+        >
           Rebind at{" "}
           <span className="mp-pop-kbd">chrome://extensions/shortcuts</span>
         </div>

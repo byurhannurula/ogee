@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { extractAllMetadata, type MetaData } from "@/lib/metadata";
 import { storage } from "@/lib/storage";
 import { NAV_EVENT } from "@/lib/spa-nav";
+import { HOST_ELEMENT_ID } from "@/lib/app";
 
 interface UseMetadataResult {
   metadata: MetaData | null;
-  hasData: boolean;
   enabled: boolean;
 }
 
@@ -14,25 +14,31 @@ interface UseMetadataResult {
  * - Initial extract deferred to `requestIdleCallback` (1500ms timeout fallback).
  * - Re-extracts on SPA navigation (history-patch event + popstate) and on
  *   `<head>` mutations (debounced 300ms).
- * - Subscribes to the per-host effective enabled flag in chrome.storage.
+ * - Subscribes to the per-host effective enabled flag in chrome.storage so
+ *   Ctrl+Shift+E can completely hide the panel.
  */
 export function useMetadata(): UseMetadataResult {
   const [metadata, setMetadata] = useState<MetaData | null>(null);
-  const [hasData, setHasData] = useState(false);
   const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
     const host = window.location.host;
     const refreshEnabled = () =>
-      storage.getEffectiveEnabled(host).then(setEnabled);
+      storage.getEffectiveEnabled(host).then((v) => {
+        setEnabled(v);
+        if (!v) {
+          // When disabled, remove the host element so the panel disappears
+          // completely (not just collapsed).
+          const el = document.getElementById(HOST_ELEMENT_ID);
+          if (el) el.remove();
+        }
+      });
 
     refreshEnabled();
     const unsubscribe = storage.onAnyChange(refreshEnabled);
 
     const extract = () => {
-      const data = extractAllMetadata();
-      setMetadata(data);
-      setHasData(Object.values(data).some((g) => g.hasData));
+      setMetadata(extractAllMetadata());
     };
 
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -41,9 +47,6 @@ export function useMetadata(): UseMetadataResult {
       timer = setTimeout(extract, 300);
     };
 
-    // Register listeners + observer BEFORE the first idle extract. If meta
-    // is injected during the gap between idle scheduling and observer
-    // attach, the mutation still queues a re-extract.
     window.addEventListener(NAV_EVENT, scheduleExtract);
     window.addEventListener("popstate", scheduleExtract);
 
@@ -68,7 +71,7 @@ export function useMetadata(): UseMetadataResult {
     };
   }, []);
 
-  return { metadata, hasData, enabled };
+  return { metadata, enabled };
 }
 
 function idle(cb: () => void) {

@@ -14,7 +14,7 @@ import { Tabs, tabId } from "./Tabs";
 import { Toolbar } from "./Toolbar";
 
 export function App() {
-  const { metadata, hasData, enabled } = useMetadata();
+  const { metadata, enabled } = useMetadata();
   const { resolvedTheme, position, showValidation, showTools } = useSettings();
   const [activeTab, setActiveTab] = useState<TabKey>("og");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -59,7 +59,7 @@ export function App() {
     [metadata],
   );
 
-  if (!enabled || !hasData || !metadata || !validation) return null;
+  if (!enabled || !metadata || !validation) return null;
 
   const titleField =
     metadata.og.fields.find((f) => f.key === "og:title")?.value ||

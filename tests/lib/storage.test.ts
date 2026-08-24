@@ -57,9 +57,9 @@ describe("storage", () => {
     mockListeners.clear();
   });
 
-  it("getDefaultEnabled returns true by default", async () => {
+  it("getDefaultEnabled returns false by default", async () => {
     const result = await storage.getDefaultEnabled();
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
   it("setDefaultEnabled persists value", async () => {

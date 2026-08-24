@@ -17,13 +17,42 @@ chrome.commands?.onCommand.addListener(async (command) => {
   }
 
   if (command === "toggle-panel") {
+    if (!tab.id) return;
+
+    let host: string;
+    try {
+      host = new URL(tab.url).host;
+    } catch {
+      return;
+    }
+    if (!host) return;
+
+    const enabled = await storage.getEffectiveEnabled(host);
+    if (!enabled) {
+      console.log(`${SW_LOG_PREFIX} site disabled, skipping`);
+      return;
+    }
+
     const msg: Message = { type: "toggle-panel" };
-    chrome.tabs.sendMessage(tab.id, msg).catch((err) => {
-      console.log(
-        `${SW_LOG_PREFIX} sendMessage failed (content script likely not injected):`,
-        err?.message ?? err,
-      );
-    });
+    chrome.scripting
+      .executeScript({
+        target: { tabId: tab.id },
+        files: ["content.js"],
+      })
+      .then(() => {
+        chrome.tabs.sendMessage(tab.id as number, msg).catch((err: unknown) => {
+          console.log(
+            `${SW_LOG_PREFIX} sendMessage failed:`,
+            err instanceof Error ? err.message : err,
+          );
+        });
+      })
+      .catch((err: unknown) => {
+        console.log(
+          `${SW_LOG_PREFIX} script injection failed:`,
+          err instanceof Error ? err.message : err,
+        );
+      });
     return;
   }
 
@@ -43,6 +72,31 @@ chrome.commands?.onCommand.addListener(async (command) => {
     );
     // If new state matches default, clear the override; else set explicit.
     await storage.setHostOverride(host, next === defaultEnabled ? null : next);
+
+    // If enabling, inject content script and show thumbnail immediately.
+    if (next && tab.id) {
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id },
+          files: ["content.js"],
+        })
+        .then(() => {
+          chrome.tabs
+            .sendMessage(tab.id as number, { type: "open-panel" })
+            .catch((err: unknown) => {
+              console.log(
+                `${SW_LOG_PREFIX} sendMessage failed:`,
+                err instanceof Error ? err.message : err,
+              );
+            });
+        })
+        .catch((err: unknown) => {
+          console.log(
+            `${SW_LOG_PREFIX} script injection failed:`,
+            err instanceof Error ? err.message : err,
+          );
+        });
+    }
   }
 });
 
